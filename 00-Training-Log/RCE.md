@@ -10,7 +10,7 @@
                                                                    中有.号会转换成下划线，所以使用 \S*=${phpinfo()}，根据这个原理最终Payload：?\S*=${getFlag()}&cmd=system('cat /flag'); 
 
 
-3       2026/5/6        [GXYCTF2019]禁止套娃          BUUCTF        页面没有任何提示，使用burpSuite抓包没有发现什么敏感的信息，只得到php的版本，暂时不考虑搜索相应CVE。使用dirseach穷举页面，发现了.git/
+3       2026/5/6        [GXYCTF2019]禁止套娃          BUUCTF        页面没有任何提示，使用burpSuite抓包没有发现什么敏感的信息，只得到php的版本，暂时不考虑搜索相应CVE。使用dirseach穷举页面，发现                                                                          了.git/
                                                                    字段，可以知道这是git泄露，我们可以使用GitHack或者GitTools得到源码。源码index.php中有主要代码：
                                                                            if (!preg_match('/data:\/\/|filter:\/\/|php:\/\/|phar:\/\//i', $_GET['exp'])) {
                                                                             if(';' === preg_replace('/[a-z,_]+\((?R)?\)/', NULL, $_GET['exp'])) {
@@ -40,5 +40,14 @@
                                                                       最终payload：              
                                                                       /fl4g.php/num=2e4&md5=0e215962017&get_flag=more$IFS$9/var/www/html
                                                                       /fllllllllllllllllllllllllllllllllllllllllaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-                                                                      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaag               
+                                                                      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaag       
+
+
+                                                                      
                                                                    
+5       2026/5/11     [BJDCTF2020]Cookie is so stable   BUUCTF       进入页面，发现最有价值的就是flag.php页面，他有个输入框，输入aa，他会回显hello aa。目前怀疑有三个攻击手段：sql，xss，ssti
+                                                                     最终使用{{1+1}}成功得到hello 2，说明有ssti漏洞，再加上这是php后端，猜测为Twig引擎。
+                                                                     第二步：重新GET刷新当前页面，并且抓包，发现Cookie中有user=2，将user改成aa，回显Hello aa。
+                                                                     第三步：user改成{{_self.env.registerUndefinedFilterCallback("exec")}} {{_self.env.getFilter("ls /")}}，结果回显Hello，
+                                                                             猜测为exec只是会打印最后一行结果，最后一行为空，所以没有回显。
+                                                                             之后尝试{{_self.env.registerUndefinedFilterCallback("system")}} {{_self.env.getFilter("ls / > /tmp/out")}}                                                                                    {{_self.env.getFilter("cat /tmp/out")}}，成功
