@@ -44,3 +44,6 @@
                                                                        ?>          
                                                                                                                                                   
                                                                               
+3      2026/5/16      [ASIS 2019]Unicorn shop   BUUCTF         进入页面，点击购买，有提示 unicodedata.numeric(price)  ，猜测他把用户输入price进行numeric方法，该方法是要求price只能为一个字符，并且
+                                                               可以适配unicode，所以我输入零，它会变成0.0
+                                                               所以解决方法就是输入商品ID为4，价格为万,原因是该商品的价格是1000多，但只能输入单字符，所以只能使用万之类的绕过。
