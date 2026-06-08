@@ -15,3 +15,24 @@
                                                                             filename=/var/www/images/../../../etc/passwd
                                                                     第六题：答案是filename=../../../etc/passwd%00.png ，因为有些在底层 C 语言风格的字符串处理中，%00被编码成\0，这是c中的字符串
                                                                             结尾所以在../../../etc/passwd%00.png中后面的.png会被忽略
+
+
+2026/6/8            访问控制漏洞             Web安全学院              第一题：访问robots.txt得到目标路径：/administrator-panel，然后可以删除目标用户
+                                                                    第二题：f12开发者工具，找到admin-llnib3路径，访问，删除目标
+                                                                    第三题：访问/admin，没有权限。登录普通用户账号，得到cookie为Cookie: Admin=false; session=Wbc1WOFqu7CGNYuZ6yK9p17p3EOk6iqo，
+                                                                            将Admin改为true访问/admin,成功
+                                                                    第四题：提示中有roleid=2时候可以成功访问，然后bp抓包得到在更新账号的邮件的功能中会有一个302重定向的响应包发现响应中的roleid为1，
+                                                                            所以上传请求：
+                                                                            POST /my-account/change-email HTTP/2
+                                                                            Host: 0acc001c04a3dbeb80259952003f0043.web-security-academy.net
+
+                                                                            {"email":"admin1@normal-user.ne",
+                                                                             "roleid": 2
+                                                                            		}
+
+                                                                            成功
+                                                                     第五题：登录自己的账号，将id改为 /my-account?id=carlos  成功得到api
+                                                                     第六题：找到目标用户发布的评论，得到他的uid，将accout里面的uid改成他的即可成功
+                                                                     
+                                                                            
+    
