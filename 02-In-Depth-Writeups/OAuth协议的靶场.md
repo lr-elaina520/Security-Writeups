@@ -35,8 +35,25 @@
 
         成功注册并得到："client_id":"_goOzwgqxyoEQ3ax_asNh"等信息
       3、访问/client/_goOzwgqxyoEQ3ax_asNh/logo去获取logo，成功得到密钥
-        
+第三关：
+    在OAuth认证中第三方提供code的同时还要提供一个state来防止CSRF攻击，这个state可以和当前用户的cookie绑定，若是改变了这个state或者直接使用别人的state都会错误
+    在这个实验中没有state，并且有绑定社交媒体账号的功能，所以可以将code=....的get请求放在恶意网站中，然后给管理员这个恶意网站点击，使得管理员自动请求目标的code=...的绑定请求，导致我的社交账号绑定admin
+    一、正常登录，登录成功后尝试绑定社交媒体账号，正常绑定，数据包中可以看到绑定时有以下请求：
+        <img width="962" height="344" alt="image" src="https://github.com/user-attachments/assets/fffae9d7-d693-4057-b4d6-e0c5293788c9" />
+
+        可以看到没有防止CSRF的参数
+
+    二、构造恶意网站
+        再次点击绑定，抓包，并有code参数的直接复制，然后drop：
+            <img width="562" height="385" alt="image" src="https://github.com/user-attachments/assets/636b8f7f-e2a7-49ff-9207-77e876f74ccd" />
+
+
+        构造恶意网站，并发送给受害者，使用img：
+        <img width="858" height="531" alt="image" src="https://github.com/user-attachments/assets/93f2ef15-b99c-4c84-80dc-4f736bc809a5" />
+
+    三、使用社交媒体账号登录，得到admin权限    
+
       
 
-
+    
 
